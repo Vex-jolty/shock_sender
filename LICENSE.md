@@ -2,7 +2,7 @@
 
 ## Copyright (c) 2025 Vex Jolteon
 
-This project is licensed under the **GNU LESSER GENERAL PUBLIC LICENSE**, version 3, datad 29 June 2007.
+This project is licensed under the **GNU LESSER GENERAL PUBLIC LICENSE**, version 3, dated 29 June 2007.
 
 ## 0. Additional Definitions
 
