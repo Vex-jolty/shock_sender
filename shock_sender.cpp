@@ -456,18 +456,20 @@ void checkMaxShockOk(std::string pathToFile) {
 	if (value > 100) warnAboutMaxShock(value);
 }
 
-int run(char* filePath) {
-	std::string pathToFile(filePath);
-	logDebug("File path " + pathToFile);
-	std::jthread checkThread(checkMaxShockOk, pathToFile);
-	checkThread.detach();
-	getUsernameAndApiKey(pathToFile);
-	warnAboutEmptyValues();
-	logDebug("Username " + username);
-	logDebug("API key " + apiKey);
-	std::jthread ioThread(startLibrary);
-
-	return 0;
+void startShockSender(char* filePath) {
+	try {
+		std::string pathToFile(filePath);
+		logDebug("File path " + pathToFile);
+		std::jthread checkThread(checkMaxShockOk, pathToFile);
+		checkThread.detach();
+		getUsernameAndApiKey(pathToFile);
+		warnAboutEmptyValues();
+		logDebug("Username " + username);
+		logDebug("API key " + apiKey);
+		std::jthread ioThread(startLibrary);
+	} catch (std::exception& e) {
+		logError(e.what());
+	}
 }
 
 net::awaitable<void> sendMessage(std::string message) {

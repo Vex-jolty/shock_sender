@@ -18,7 +18,7 @@ typedef struct MaxShockAndIntensityPerQuarter {
 	int durationMilliseconds;
 } MaxShockAndIntensityPerQuarter;
 EXPORT MaxShockAndIntensityPerQuarter getMaxShockAndIntensityPerQuarter();
-EXPORT int run(char* filePath);
+EXPORT void startShockSender(char* filePath);
 EXPORT int sendShock(int amount, bool useQuarters = true);
 EXPORT bool getIsRunning();
 EXPORT int stop();
