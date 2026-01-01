@@ -34,8 +34,14 @@ websocket::stream<tcp::socket> ws{ ioc };
 std::string debugLogFile = "debug.log";
 std::string errorLogFile = "error.log";
 
-//std::string wsHost = "localhost";
+/*
+*	These values will be populated upon initialization
+*/
+#ifdef NDEBUG
 std::string wsHost = "broker.pishock.com";
+#else
+std::string wsHost = "localhost";
+#endif
 std::string psHost = "ps.pishock.com";
 std::string authHost = "auth.pishock.com";
 std::string username;
@@ -43,10 +49,11 @@ std::string apiKey;
 int userId = 0;
 int clientId = 0;
 std::vector<int> shockerIds;
-bool isRunning = false;
+bool isRunning = false; // Whether the websocket is running
 
 bool userWarnedAboutMaxShock = false; // Ensuring warning isn't displayed with every shock
 bool userAuthorizedDangerousValue = false;
+bool shockCanBeSent = true;
 
 class L {
 public:
@@ -382,8 +389,11 @@ net::awaitable<void> startWebsocket() {
 	std::string target = "/v2?username=" + username + "&apiKey=" + apiKey;
 	auto results = co_await resolver.async_resolve(
 		wsHost,
-		//"5000",
+		#ifdef NDEBUG
 		"80",
+		#else
+		"5000",
+		#endif
 		net::use_awaitable
 	);
 	co_await net::async_connect(
@@ -469,6 +479,7 @@ MaxShockAndIntensityPerQuarter getMaxShockAndIntensityPerQuarter() {
 	std::ifstream configFile("shock_config.ini");
 	int maxShock = 100;
 	int intensityPerQuarter = 0;
+	int intensityPerHealth = 0;
 	int durationMilliseconds = 0;
 	if (configFile.bad()) {
 		configFile.close();
@@ -493,6 +504,8 @@ MaxShockAndIntensityPerQuarter getMaxShockAndIntensityPerQuarter() {
 			maxShock = std::stoi(value);
 		} else if (boost::starts_with(key, "intensity_per_quarter")) {
 			intensityPerQuarter = std::stoi(value);
+		} else if (boost::starts_with(key, "intensity_per_health")) {
+			intensityPerHealth = std::stoi(value);
 		} else if (boost::starts_with(key, "duration_ms")) {
 			durationMilliseconds = std::stoi(value);
 		}
@@ -504,15 +517,21 @@ MaxShockAndIntensityPerQuarter getMaxShockAndIntensityPerQuarter() {
 	return MaxShockAndIntensityPerQuarter{
 		maxShock > 100 && !userAuthorizedDangerousValue ? 100 : maxShock,
 		intensityPerQuarter <= 0 ? 1 : intensityPerQuarter,
+		intensityPerHealth <= 0 ? 1 : intensityPerHealth,
 		durationMilliseconds <= 0 ? 100 : durationMilliseconds
 	};
 }
 
-int sendShock(int quarters) {
+int sendShock(int amount, bool useQuarters) {
 	if (clientId == 0 || !isRunning) return 1;
 	MaxShockAndIntensityPerQuarter maxShockAndIntensityPerQuarter = getMaxShockAndIntensityPerQuarter();
 	int limit = maxShockAndIntensityPerQuarter.maxShockIntensity;
-	int intensity = maxShockAndIntensityPerQuarter.intensityPerQuarter * quarters;
+	int intensity = 0;
+	if (useQuarters) {
+		intensity = maxShockAndIntensityPerQuarter.intensityPerQuarter * amount;
+	} else {
+		intensity = maxShockAndIntensityPerQuarter.intensityPerHealth * amount;
+	}
 	bool okayToSend = maxShockAndIntensityPerQuarter.maxShockIntensity <= 100 || (userAuthorizedDangerousValue && userWarnedAboutMaxShock);
 	if (!okayToSend) {
 		logDebug("Max value too high, aborting.");
@@ -521,8 +540,6 @@ int sendShock(int quarters) {
 
 	if (intensity > limit) {
 		intensity = limit;
-	} else if (intensity <= 0) {
-		intensity = maxShockAndIntensityPerQuarter.intensityPerQuarter;
 	}
 
 	std::vector<PublishCommandT> commands;
@@ -563,6 +580,7 @@ int sendShock(int quarters) {
 	logDebug("Shock sent");
 	return 0;
 }
+
 
 int stop() {
 	try {

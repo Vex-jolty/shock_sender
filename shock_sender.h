@@ -14,11 +14,12 @@ extern "C" {
 typedef struct MaxShockAndIntensityPerQuarter {
 	int maxShockIntensity;
 	int intensityPerQuarter;
+	int intensityPerHealth;
 	int durationMilliseconds;
 } MaxShockAndIntensityPerQuarter;
 EXPORT MaxShockAndIntensityPerQuarter getMaxShockAndIntensityPerQuarter();
 EXPORT int run(char* filePath);
-EXPORT int sendShock(int quarters);
+EXPORT int sendShock(int amount, bool useQuarters = true);
 EXPORT bool getIsRunning();
 EXPORT int stop();
 #ifdef __cplusplus
