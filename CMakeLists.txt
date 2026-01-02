@@ -41,7 +41,8 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
 		set_source_files_properties(
 			shock_sender.cpp
 			PROPERTIES
-				COMPILE_OPTIONS "-Wa,-mbig-obj -static"
+				COMPILE_OPTIONS "-Wa,-mbig-obj"
+				LINK_OPTIONS "-static"
 		)
 
 		set_target_properties(shock_sender PROPERTIES
