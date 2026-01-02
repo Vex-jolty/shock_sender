@@ -13,34 +13,43 @@ endif()
 
 find_package(Boost REQUIRED COMPONENTS json)
 
-target_compile_options(shock_sender PRIVATE
-	-ffunction-sections
-	-fdata-sections
-)
+if (NOT MSVC)
+	target_compile_options(shock_sender PRIVATE
+		-ffunction-sections
+		-fdata-sections
+	)
 
-target_link_options(shock_sender PRIVATE
-	-Wl,--gc-sections
-)
+	target_link_options(shock_sender PRIVATE
+		-Wl,--gc-sections
+	)
+else()
+	target_compile_options(shock_sender PRIVATE
+		-/bigobj
+	)
+endif()
+
+set(LINKED_LIBS Boost::json)
+
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	set_source_files_properties(
 		shock_sender.cpp
 		PROPERTIES
 			COMPILE_OPTIONS "-fno-function-sections;-fno-data-sections"
 	)
+	# These settings are specifically for cross-compiling from Linux to Windows
+	if (MINGW AND CMAKE_CROSSCOMPILING)
+		set_source_files_properties(
+			shock_sender.cpp
+			PROPERTIES
+				COMPILE_OPTIONS "-Wa,-mbig-obj -static"
+		)
 
-	set_source_files_properties(
-		shock_sender.cpp
-		PROPERTIES
-			COMPILE_OPTIONS "-Wa,-mbig-obj"
-	)
-
-	set_target_properties(shock_sender PROPERTIES
-		PREFIX ""
-		SUFFIX ".dll"
-	)
-	set(LINKED_LIBS ws2_32 ${Boost_LIBRARIES})
-else()
-	set(LINKED_LIBS ${Boost_LIBRARIES})
+		set_target_properties(shock_sender PROPERTIES
+			PREFIX ""
+			SUFFIX ".dll"
+		)
+		list(APPEND LINKED_LIBS ws2_32)
+	endif()
 endif()
 
 target_include_directories(shock_sender PRIVATE ${Boost_INCLUDE_DIRS})
