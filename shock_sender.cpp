@@ -18,7 +18,7 @@
 #include <chrono>
 #include <thread>
 #include "shock_sender.h"
-#if defined WIN32
+#ifdef WIN32
 #include <windows.h>
 #endif
 
@@ -49,7 +49,7 @@ std::string apiKey;
 int userId = 0;
 int clientId = 0;
 std::vector<int> shockerIds;
-bool isRunning = false; // Whether the websocket is running
+bool isRunning = false;
 
 bool userWarnedAboutMaxShock = false; // Ensuring warning isn't displayed with every shock
 bool userAuthorizedDangerousValue = false;
@@ -389,11 +389,11 @@ net::awaitable<void> startWebsocket() {
 	std::string target = "/v2?username=" + username + "&apiKey=" + apiKey;
 	auto results = co_await resolver.async_resolve(
 		wsHost,
-		#ifdef NDEBUG
+#ifdef NDEBUG
 		"80",
-		#else
+#else
 		"5000",
-		#endif
+#endif
 		net::use_awaitable
 	);
 	co_await net::async_connect(
@@ -456,7 +456,7 @@ void checkMaxShockOk(std::string pathToFile) {
 	if (value > 100) warnAboutMaxShock(value);
 }
 
-void startShockSender(char* filePath) {
+extern "C" EXPORT void __stdcall startShockSender(char* filePath) {
 	try {
 		std::string pathToFile(filePath);
 		logDebug("File path " + pathToFile);
@@ -524,7 +524,7 @@ MaxShockAndIntensityPerQuarter getMaxShockAndIntensityPerQuarter() {
 	};
 }
 
-int sendShock(int amount, bool useQuarters) {
+extern "C" EXPORT int __stdcall sendShock(int amount, bool useQuarters) {
 	if (clientId == 0 || !isRunning) return 1;
 	MaxShockAndIntensityPerQuarter maxShockAndIntensityPerQuarter = getMaxShockAndIntensityPerQuarter();
 	int limit = maxShockAndIntensityPerQuarter.maxShockIntensity;
@@ -584,7 +584,7 @@ int sendShock(int amount, bool useQuarters) {
 }
 
 
-int stop() {
+extern "C" EXPORT __stdcall int stop() {
 	try {
 		ws.close(websocket::close_code::normal);
 	} catch (const std::exception& e) {
@@ -593,6 +593,6 @@ int stop() {
 	std::terminate();
 }
 
-bool getIsRunning() {
+extern "C" EXPORT __stdcall bool getIsRunning() {
 	return isRunning;
 }
