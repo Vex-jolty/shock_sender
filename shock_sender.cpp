@@ -358,6 +358,22 @@ net::awaitable<void> getShockerIds() {
 	}
 }
 
+std::string removeComments(std::string& input) {
+	if (!boost::icontains(input, "#")) return input;
+	std::vector<std::string> splitInput;
+	boost::split(splitInput, input, boost::is_any_of("#"));
+	return splitInput[0];
+}
+
+std::tuple<std::string, std::string> getKeyAndVal(std::string line) {
+	boost::trim(line);
+	std::vector<std::string> splitLine;
+	boost::split(splitLine, line, boost::is_any_of("="));
+	std::string& key = splitLine[0];
+	std::string& value = splitLine[1];
+	return std::make_tuple(key, value);
+}
+
 void getUsernameAndApiKey(std::string& pathToFile) {
 	std::ifstream configFile(pathToFile);
 	if (configFile.bad()) {
@@ -366,10 +382,11 @@ void getUsernameAndApiKey(std::string& pathToFile) {
 	}
 	std::string line;
 	while (std::getline(configFile, line)) {
-		std::vector<std::string> splitLine;
-		boost::split(splitLine, line, boost::is_any_of("="));
-		std::string& key = splitLine[0];
-		std::string& value = splitLine[1];
+		line = removeComments(line);
+		if (line.empty()) continue;
+		std::tuple<std::string, std::string> keyAndVal = getKeyAndVal(line);
+		std::string& key = get<0>(keyAndVal);
+		std::string& value = get<1>(keyAndVal);
 		if (boost::starts_with(key, "username")) {
 			username = value;
 		} else if (boost::starts_with(key, "api_key")) {
@@ -449,10 +466,10 @@ void checkMaxShockOk(std::string pathToFile) {
 		if (boost::starts_with(line, "max_shock")) break;
 	}
 	configFile.close();
-	boost::trim(line);
-	std::vector<std::string> splitLine;
-	boost::split(splitLine, line, boost::is_any_of("="));
-	int value = std::stoi(splitLine[1]);
+	line = removeComments(line);
+	if (line.empty()) return;
+	std::tuple<std::string, std::string> keyAndVal = getKeyAndVal(line);
+	int value = std::stoi(get<1>(keyAndVal));
 	if (value > 100) warnAboutMaxShock(value);
 }
 
@@ -493,10 +510,11 @@ MaxShockAndIntensityPerQuarter getMaxShockAndIntensityPerQuarter() {
 	}
 	std::string line;
 	while (std::getline(configFile, line)) {
-		std::vector<std::string> splitLine;
-		boost::split(splitLine, line, boost::is_any_of("="));
-		std::string& key = splitLine[0];
-		std::string& value = splitLine[1];
+		line = removeComments(line);
+		if (line.empty()) continue;
+		std::tuple<std::string, std::string> keyAndVal = getKeyAndVal(line);
+		std::string& key = get<0>(keyAndVal);
+		std::string& value = get<1>(keyAndVal);
 		bool isValid = false;
 		for (auto& c : value) {
 			isValid = std::isdigit(c);
