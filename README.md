@@ -6,7 +6,7 @@ Simply put, whenever `sendShock` is called, it sends a shock of a specific inten
 
 This was originally designed for Ship of Harkinian (hence the `intensity_per_quarter` variable, referring to a quarter of a heart), but is now being independently published so anyone can modify it for their own projects. Feel free to fork it for your own mods :3
 
-Please note that you *must* call the `run` function *before* running `sendShock`, as that will start the Websocket client.
+Please note that you *must* call the `startShockSender` function *before* running `sendShock`, as that will start the Websocket client.
 
 ## How to set it up
 
