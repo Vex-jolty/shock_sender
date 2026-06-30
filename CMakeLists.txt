@@ -63,5 +63,16 @@ if (NOT EXISTS ${CMAKE_BINARY_DIR}/shock_config.ini)
 	file(RENAME ${CMAKE_BINARY_DIR}/shock_config.example.ini ${CMAKE_BINARY_DIR}/shock_config.ini)
 endif()
 
+file(COPY ${CMAKE_SOURCE_DIR}/shock_sender.h DESTINATION ${CMAKE_BINARY_DIR})
+
 target_include_directories(${PROJECT_NAME} PRIVATE ${Boost_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${LINKED_LIBS})
+
+if (LINUX)
+	install(TARGETS ${PROJECT_NAME}
+		BUNDLE DESTINATION .
+		RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+	)
+	install(FILES ${CMAKE_BINARY_DIR}/shock_config.ini DESTINATION /etc/shock_sender)
+	install(FILES ${CMAKE_BINARY_DIR}/shock_sender.h DESTINATION /usr/include)
+endif()
