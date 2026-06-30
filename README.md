@@ -22,6 +22,8 @@ username #your PiShock username
 api_key #your PiShock API key
 
 duration_ms #the duration of the shocks, in milliseconds
+
+mode  #the PiShock mode. Can be v (vibrate) or s (shock). If missing, it defaults to vibrate
 ```
 
 Just set all these up with their respective values, and you should be good to go!

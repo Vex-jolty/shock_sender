@@ -31,8 +31,8 @@ net::io_context ioc;
 
 websocket::stream<tcp::socket> ws{ ioc };
 
-std::string debugLogFile = "debug.log";
-std::string errorLogFile = "error.log";
+std::string debugLogFile = "shock_sender_debug.log";
+std::string errorLogFile = "shock_sender_error.log";
 
 /*
 *	These values will be populated upon initialization
@@ -494,6 +494,21 @@ net::awaitable<void> sendMessage(std::string message) {
 	co_await ws.async_write(net::buffer(message), net::use_awaitable);
 }
 
+const std::string getMode() {
+	std::ifstream configFile("shock_config.ini");
+	std::string line;
+	while (std::getline(configFile, line)) {
+		if (boost::istarts_with(line, "mode")) break;
+	}
+	line = removeComments(line);
+	// default to vibrate
+	if (line.empty()) return "v";
+	std::tuple<std::string, std::string> keyAndVal = getKeyAndVal(line);
+	std::string& val = get<1>(keyAndVal);
+	if (val != "s" && val != "v") return "v";
+	return val;
+}
+
 MaxShockAndIntensityPerQuarter getMaxShockAndIntensityPerQuarter() {
 	std::ifstream configFile("shock_config.ini");
 	int maxShock = 100;
@@ -544,6 +559,7 @@ MaxShockAndIntensityPerQuarter getMaxShockAndIntensityPerQuarter() {
 
 extern "C" EXPORT int __stdcall sendShock(int amount, bool useQuarters) {
 	if (clientId == 0 || !isRunning) return 1;
+	const std::string& mode = getMode();
 	MaxShockAndIntensityPerQuarter maxShockAndIntensityPerQuarter = getMaxShockAndIntensityPerQuarter();
 	int limit = maxShockAndIntensityPerQuarter.maxShockIntensity;
 	int intensity = 0;
@@ -575,7 +591,7 @@ extern "C" EXPORT int __stdcall sendShock(int amount, bool useQuarters) {
 		BodyT body;
 		body.set_l(l);
 		body.set_d(maxShockAndIntensityPerQuarter.durationMilliseconds);
-		body.set_m("s");
+		body.set_m(mode);
 		body.set_i(intensity);
 		body.set_r(true);
 		body.set_id(id);
