@@ -5,7 +5,10 @@ set(CMAKE_C_STANDARD 23)
 
 project(shock_sender VERSION 0.0.1)
 
-add_library(${PROJECT_NAME} SHARED shock_sender.cpp)
+add_library(${PROJECT_NAME} SHARED
+	src/shock_sender.cpp
+	src/shock_logger.cpp
+)
 
 if(POLICY CMP0167)
   cmake_policy(SET CMP0167 NEW)
@@ -63,9 +66,9 @@ if (NOT EXISTS ${CMAKE_BINARY_DIR}/shock_config.ini)
 	file(RENAME ${CMAKE_BINARY_DIR}/shock_config.example.ini ${CMAKE_BINARY_DIR}/shock_config.ini)
 endif()
 
-file(COPY ${CMAKE_SOURCE_DIR}/shock_sender.h DESTINATION ${CMAKE_BINARY_DIR})
+file(COPY ${CMAKE_SOURCE_DIR}/include/shock_sender.h DESTINATION ${CMAKE_BINARY_DIR})
 
-target_include_directories(${PROJECT_NAME} PRIVATE ${Boost_INCLUDE_DIRS})
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/include ${Boost_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${LINKED_LIBS})
 
 if (LINUX)
