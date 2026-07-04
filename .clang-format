@@ -1,0 +1,30 @@
+ColumnLimit: 100
+
+UseTab: Always
+IndentWidth: 2
+TabWidth: 2
+ContinuationIndentWidth: 2
+
+IndentAccessModifiers: true
+AccessModifierOffset: -1
+
+BinPackParameters: false
+BinPackArguments: false
+BinPackLongBracedList: false
+
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowAllArgumentsOnNextLine: false
+BreakAfterReturnType: None
+AlwaysBreakAfterDefinitionReturnType: None
+AlignAfterOpenBracket: BlockIndent
+PenaltyReturnTypeOnItsOwnLine: 99999
+NamespaceIndentation: All
+IndentCaseLabels: true
+SortIncludes: false
+IndentPPDirectives: BeforeHash
+AlignOperands: DontAlign
+PointerAlignment: Left
+
+Cpp11BracedListStyle: true
+PackConstructorInitializers: Never
+InitializerList::Pack: Never
