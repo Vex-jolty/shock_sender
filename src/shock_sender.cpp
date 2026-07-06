@@ -499,7 +499,11 @@ void checkMaxShockOk(std::string pathToFile) {
 		warnAboutMaxShock(value);
 }
 
+#ifdef WIN32
 extern "C" EXPORT void __stdcall startShockSender(char* filePath) {
+#else
+extern "C" EXPORT void startShockSender(char* filePath) {
+#endif
 	try {
 		std::string pathToFile(filePath);
 		LogLevel logLevel = getLogLevel(filePath);
@@ -606,7 +610,11 @@ MaxShockAndIntensityPerQuarter getMaxShockAndIntensityPerQuarter() {
 	};
 }
 
+#ifdef WIN32
 extern "C" EXPORT int __stdcall sendShock(int amount, bool useQuarters) {
+#else
+extern "C" EXPORT int sendShock(int amount, bool useQuarters) {
+#endif
 	if (clientId == 0 || !isRunning)
 		return 1;
 	const std::string& mode = getMode();
@@ -674,7 +682,11 @@ extern "C" EXPORT int __stdcall sendShock(int amount, bool useQuarters) {
 	return 0;
 }
 
-extern "C" EXPORT __stdcall int stop() {
+#ifdef WIN32
+extern "C" EXPORT int __stdcall  stop() {
+#else
+extern "C" EXPORT int  stop() {
+#endif
 	try {
 		ws.close(websocket::close_code::normal);
 	} catch (const std::exception& e) {
@@ -685,4 +697,8 @@ extern "C" EXPORT __stdcall int stop() {
 	std::terminate();
 }
 
-extern "C" EXPORT __stdcall bool getIsRunning() { return isRunning; }
+#ifdef WIN32
+extern "C" EXPORT bool __stdcall getIsRunning() { return isRunning; }
+#else
+extern "C" EXPORT bool getIsRunning() { return isRunning; }
+#endif

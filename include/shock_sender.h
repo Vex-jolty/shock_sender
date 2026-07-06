@@ -19,10 +19,17 @@ typedef struct MaxShockAndIntensityPerQuarter {
 		int durationMilliseconds;
 } MaxShockAndIntensityPerQuarter;
 EXPORT MaxShockAndIntensityPerQuarter getMaxShockAndIntensityPerQuarter();
+#ifdef WIN32
 EXPORT void __stdcall startShockSender(char* filePath);
 EXPORT int __stdcall sendShock(int amount, bool useQuarters = true);
 EXPORT bool __stdcall getIsRunning();
 EXPORT int __stdcall stop();
+#else
+EXPORT void startShockSender(char* filePath);
+EXPORT int sendShock(int amount, bool useQuarters = true);
+EXPORT bool getIsRunning();
+EXPORT int stop();
+#endif
 #ifdef __cplusplus
 }
 #endif
