@@ -1,0 +1,10 @@
+{
+	"name": "shock-sender",
+  "version-string": "0.0.1",
+  "dependencies": [
+		"boost-cmake",
+		"boost-asio",
+		"boost-beast",
+		"boost-json"
+  ]
+}

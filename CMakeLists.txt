@@ -1,9 +1,17 @@
-cmake_minimum_required(VERSION 3.26.0 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.30 FATAL_ERROR)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_C_STANDARD 23)
 
 project(shock_sender VERSION 0.0.1)
+
+if (MINGW)
+	set(VCPKG_TARGET_TRIPLET "x64-mingw-static")
+elseif(MSVC)
+	set(VCPKG_TARGET_TRIPLET "x64-windows")
+elseif(GNU)
+	set(VCPKG_TARGET_TRIPLET "x64-linux")
+endif()
 
 add_library(${PROJECT_NAME} SHARED
 	src/shock_sender.cpp
@@ -18,20 +26,41 @@ if (NOT MSVC)
 	target_compile_options(${PROJECT_NAME} PRIVATE
 		-ffunction-sections
 		-fdata-sections
-		-Wa,-mbig-obj
 	)
+
+	if (MINGW)
+		target_compile_options(${PROJECT_NAME} PRIVATE
+			-Wa,-mbig-obj
+		)
+	endif()
 
 	target_link_options(${PROJECT_NAME} PRIVATE
 		-Wl,--gc-sections
 	)
 else()
-	target_compile_options(${PROJECT_NAME} PRIVATE
-		-/bigobj
+	if(NOT DEFINED _WIN32_WINNT)
+		set(_WIN32_WINNT "0x0A00")
+		target_compile_definitions(${PROJECT_NAME} PRIVATE WIN32 _WIN32_WINNT=${_WIN32_WINNT})
+	endif()
+	set_property(TARGET ${PROJECT_NAME} PROPERTY
+		MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
 	)
+	target_compile_options(${PROJECT_NAME} PRIVATE
+		/bigobj
+	)
+	target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/include/msvc_compat)
 endif()
 
-find_package(Boost REQUIRED COMPONENTS json)
-set(LINKED_LIBS Boost::json)
+if(VCPKG_BUILD)
+	list(APPEND CMAKE_PREFIX_PATH "${CMAKE_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}")
+endif()
+
+if(VCPKG_BUILD)
+	include(${VCPKG_ROOT_DIR}/scripts/buildsystems/vcpkg.cmake)
+endif()
+
+find_package(Boost REQUIRED COMPONENTS json asio beast)
+set(LINKED_LIBS Boost::json Boost::asio Boost::beast)
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	set_source_files_properties(
@@ -57,8 +86,8 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
 			PREFIX ""
 			SUFFIX ".dll"
 		)
-		list(APPEND LINKED_LIBS ws2_32)
 	endif()
+	list(APPEND LINKED_LIBS ws2_32)
 endif()
 
 if (NOT EXISTS ${CMAKE_BINARY_DIR}/shock_config.ini)
