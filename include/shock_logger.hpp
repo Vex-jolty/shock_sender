@@ -3,10 +3,17 @@
 #include <filesystem>
 #include <fstream>
 #include <chrono>
+#include <iostream>
 #ifdef WIN32
 	#include <shlobj.h>
 	#include <shlwapi.h>
 	#include <knownfolders.h>
+	#include <windows.h>
+#else
+	#include <unistd.h>
+	#include <sys/types.h>
+	#include <pwd.h>
+	#include <syslog.h>
 #endif
 
 enum class LogLevel {
@@ -30,6 +37,7 @@ class ShockLogger {
 		void _log(const std::string& message, LogLevel levelToLog);
 		const std::string _getLevelString(LogLevel levelToLog);
 		void _createNewFileIfTooBig(const std::string& filePath);
+		void _writeSystemErrorLog(const std::string& message);
 #ifdef WIN32
 		const std::string _pathDivider = "\\";
 		std::string _getAppDataDir() {
