@@ -39,3 +39,15 @@ MacOS is currently unsupported, and there are no plans to support it. If you're 
 ### **Q:** How many shockers does this connect to?
 
 **A:** Every single one you have, all at once. The duration and intensity aren't customizable per shocker, though. All of them will use the same values.
+
+## Known issues
+
+- The project may not work properly if compiled with MSVC for Windows
+
+- Some users reported crashes during logging operations, but those couldn't be reproduced
+
+- The Windows edition has a pretty heavy file size compared to the Linux edition
+
+- There is often a delay before the PiShock actually fires
+
+- Continuous shocks sometimes fail to actually be continuous
