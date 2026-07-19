@@ -14,6 +14,19 @@ ShockLogger::ShockLogger(LogLevel level) {
 	if (!fs::exists(_directory)) {
 		fs::create_directory(_directory);
 	}
+
+	_workerThread = std::thread(&ShockLogger::_workerLoop, this);
+}
+
+ShockLogger::~ShockLogger() {
+	{
+		std::lock_guard<std::mutex> lock(_queueMutex);
+		_stopWorker = true;
+	}
+	_condition.notify_one();
+	if (_workerThread.joinable()) {
+		_workerThread.join();
+	}
 }
 
 const std::string ShockLogger::_getLevelString(LogLevel levelToLog) {
@@ -71,30 +84,44 @@ void ShockLogger::_log(const std::string& message, LogLevel levelToLog) {
 	}
 }
 
-void ShockLogger::debug(const std::string& message) { _log(message, LogLevel::DEBUG); }
+void ShockLogger::_addToQueue(const std::string& message, LogLevel levelToLog) {
+	{
+		std::lock_guard<std::mutex> lock(_queueMutex);
+		_logQueue.push({message, levelToLog});
+	}
+	_condition.notify_one();
+}
 
-void ShockLogger::info(const std::string& message) { _log(message, LogLevel::INFO); }
+void ShockLogger::debug(const std::string& message) { _addToQueue(message, LogLevel::DEBUG); }
 
-void ShockLogger::warn(const std::string& message) { _log(message, LogLevel::WARN); }
+void ShockLogger::info(const std::string& message) { _addToQueue(message, LogLevel::INFO); }
 
-void ShockLogger::err(const std::string& message) { _log(message, LogLevel::ERR); }
+void ShockLogger::warn(const std::string& message) { _addToQueue(message, LogLevel::WARN); }
+
+void ShockLogger::err(const std::string& message) { _addToQueue(message, LogLevel::ERR); }
 
 void ShockLogger::_writeSystemErrorLog(const std::string& message) {
 #ifdef WIN32
 	HANDLE eventSource = RegisterEventSourceA(nullptr, "Shock Sender Library");
 	const char* messagePtr[1] = {message.c_str()};
-	ReportEventA(
-		eventSource,
-		EVENTLOG_ERROR_TYPE,
-		0,
-		8008,
-		nullptr,
-		1,
-		0,
-		messagePtr,
-		nullptr
-	);
+	ReportEventA(eventSource, EVENTLOG_ERROR_TYPE, 0, 8008, nullptr, 1, 0, messagePtr, nullptr);
 #else
 	syslog(LOG_ERR, "%s", message);
 #endif
+}
+
+void ShockLogger::_workerLoop() {
+	while (true) {
+		std::pair<std::string, LogLevel> logItem;
+		{
+			std::unique_lock<std::mutex> lock(_queueMutex);
+			_condition.wait(lock, [this]() { return !_logQueue.empty() || _stopWorker; });
+
+			if (_stopWorker && _logQueue.empty())
+				return;
+			logItem = std::move(_logQueue.front());
+			_logQueue.pop();
+		}
+		_log(logItem.first, logItem.second);
+	}
 }

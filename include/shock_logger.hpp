@@ -4,6 +4,11 @@
 #include <fstream>
 #include <chrono>
 #include <iostream>
+#include <thread>
+#include <mutex>
+#include <queue>
+#include <condition_variable>
+#include <atomic>
 #ifdef WIN32
 	#include <shlobj.h>
 	#include <shlwapi.h>
@@ -26,6 +31,7 @@ enum class LogLevel {
 class ShockLogger {
 	public:
 		ShockLogger(LogLevel level);
+		~ShockLogger();
 		void debug(const std::string& message);
 		void info(const std::string& message);
 		void warn(const std::string& message);
@@ -34,10 +40,17 @@ class ShockLogger {
 	private:
 		std::string _directory;
 		LogLevel _level;
+		void _addToQueue(const std::string& message, LogLevel levelToLog);
 		void _log(const std::string& message, LogLevel levelToLog);
 		const std::string _getLevelString(LogLevel levelToLog);
 		void _createNewFileIfTooBig(const std::string& filePath);
 		void _writeSystemErrorLog(const std::string& message);
+		void _workerLoop();
+		std::mutex _queueMutex;
+		std::queue<std::pair<std::string, LogLevel>> _logQueue;
+		std::condition_variable _condition;
+		std::atomic<bool> _stopWorker{false};
+		std::thread _workerThread;
 #ifdef WIN32
 		const std::string _pathDivider = "\\";
 		std::string _getAppDataDir() {
